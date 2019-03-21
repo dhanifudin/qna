@@ -10,19 +10,21 @@ module.exports = {
       return h.response(result);
     } catch (err) {
       console.error(err);
-      throw boom.badImplementation();
+      return boom.badImplementation();
     }
   },
   create: async (request, h) => {
     try {
+      const { credentials } = request.auth;
       const { payload } = request;
-      console.log(payload);
-      const result = await new model(payload)
-        .save();
+      const result = await new model({
+        question: payload.question,
+        author: credentials.id,
+      }).save();
       return h.response(result);
     } catch (err) {
       console.error(err);
-      throw boom.badImplementation();
+      return boom.badImplementation();
     }
   },
   show: async (request, h) => {
@@ -31,38 +33,45 @@ module.exports = {
 
       const result = await model.findOne({ _id: id });
       if (!result)
-        throw boom.notFound();
+        return boom.notFound();
       return h.response(result);
     } catch (err) {
       console.error(err);
-      throw boom.badImplementation();
+      return boom.badImplementation();
     }
   },
   update: async (request, h) => {
     try {
+      const { credentials } = request.auth;
       const { id } = request.params;
       const { payload } = request;
 
-      const result = await model
-        .findOneAndUpdate({ _id: id }, payload);
+      const result = await model.findOne({ _id: id });
       if (!result)
-        throw boom.notFound();
+        return boom.notFound();
+      if (result.author != credentials.id)
+        return boom.unauthorized();
+      result.update(payload);
       return h.response(result);
     } catch (err) {
       console.error(err);
-      throw boom.badImplementation();
+      return boom.badImplementation();
     }
   },
   destroy: async (request, h) => {
     try {
+      const { credentials } = request.auth;
       const { id } = request.params;
       const result = await model.findOne({ _id: id });
       if (!result)
-        throw boom.notFound();
+        return boom.notFound();
+      if (result.author != credentials.id)
+        return boom.unauthorized();
+      result.destroy();
       return h.response(result);
     } catch (err) {
       console.error(err);
-      throw boom.badImplementation();
+      return boom.badImplementation();
     }
   },
   upvote: async (request, h) => {
@@ -70,13 +79,13 @@ module.exports = {
       const { id } = request.params;
       const result = await model.findOne({ _id: id });
       if (!result)
-        throw boom.notFound();
+        return boom.notFound();
       result.upvote += 1;
       result.save();
       return h.response(result);
     } catch (err) {
       console.error(err);
-      throw boom.badImplementation();
+      return boom.badImplementation();
     }
   },
   downvote: async (request, h) => {
@@ -84,28 +93,32 @@ module.exports = {
       const { id } = request.params;
       const result = await model.findOne({ _id: id });
       if (!result)
-        throw boom.notFound();
+        return boom.notFound();
       result.downvote += 1;
       result.save();
       return h.response(result);
     } catch (err) {
       console.error(err);
-      throw boom.badImplementation();
+      return boom.badImplementation();
     }
   },
   answer: async (request, h) => {
     try {
+      const { credentials } = request.auth;
       const { id } = request.params;
       const { payload } = request;
       const result = await model.findOne({ _id: id });
       if (!result)
-        throw boom.notFound();
-      result.answers.push(payload);
+        return boom.notFound();
+      result.answers.push({
+        answer: payload.answer,
+        author: credentials.id,
+      });
       result.save();
       return h.response(result);
     } catch (err) {
       console.error(err);
-      throw boom.badImplementation();
+      return boom.badImplementation();
     }
   },
   upvoteAnswer: async (request, h) => {
@@ -113,18 +126,18 @@ module.exports = {
       const { id, qid } = request.params;
       const result = await model.findOne({ _id: id });
       if (!result)
-        throw boom.notFound();
+        return boom.notFound();
       const answer = result.answers.find((answer) => {
         return answer._id == qid;
       });
       if (!answer)
-        throw boom.notFound();
+        return boom.notFound();
       answer.upvote += 1;
       result.save();
       return h.response(answer);
     } catch (err) {
       console.error(err);
-      throw boom.badImplementation();
+      return boom.badImplementation();
     }
   },
   downvoteAnswer: async (request, h) => {
@@ -132,18 +145,18 @@ module.exports = {
       const { id, qid } = request.params;
       const result = await model.findOne({ _id: id });
       if (!result)
-        throw boom.notFound();
+        return boom.notFound();
       const answer = result.answers.find((answer) => {
         return answer._id == qid;
       });
       if (!answer)
-        throw boom.notFound();
+        return boom.notFound();
       answer.downvote += 1;
       result.save();
       return h.response(answer);
     } catch (err) {
       console.error(err);
-      throw boom.badImplementation();
+      return boom.badImplementation();
     }
   }
 };

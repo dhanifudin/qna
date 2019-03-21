@@ -1,5 +1,6 @@
 'use strict';
 
+const joi = require('joi');
 const handler = require('./handler');
 
 module.exports = {
@@ -9,14 +10,28 @@ module.exports = {
       method: 'GET',
       path: '/questions',
       handler: handler.search,
+      options: {
+        auth: false
+      }
     }, {
       method: 'POST',
       path: '/questions',
       handler: handler.create,
+      options: {
+        auth: false,
+        validate: {
+          payload: {
+            question: joi.string().required(),
+          }
+        }
+      }
     }, {
       method: 'GET',
       path: '/questions/{id}',
       handler: handler.show,
+      options: {
+        auth: false,
+      }
     }, {
       method: 'PUT',
       path: '/questions/{id}',

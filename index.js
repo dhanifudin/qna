@@ -14,13 +14,14 @@ const server = Hapi.server({
 
 const start = async () => {
   try {
-    const routes = [
+    const plugins = [
+      require('./jwt'),
       require('./auth'),
       require('./user'),
       require('./question'),
     ];
-    await server.register(routes);
 
+    await server.register(plugins);
     await mongoose.connect();
     await server.start();
   } catch (err) {
