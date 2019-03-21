@@ -16,6 +16,10 @@ module.exports = {
   create: async (request, h) => {
     try {
       const { payload } = request;
+      const { username } = payload;
+      const userFound = await model.findOne({ username });
+      if (userFound)
+        return boom.badRequest(`${username} is exist`);
       const result = await new model(payload)
         .save();
       return h.response(result);

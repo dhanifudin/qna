@@ -2,6 +2,7 @@
 
 const boom = require('boom');
 const model = require('./model');
+const userModel = require('../user/model');
 
 module.exports = {
   search: async (request, h) => {
@@ -17,9 +18,11 @@ module.exports = {
     try {
       const { credentials } = request.auth;
       const { payload } = request;
+      const user = await userModel
+        .findById({ _id: credentials.id });
       const result = await new model({
         question: payload.question,
-        author: credentials.id,
+        author: { id: user.id, name: user.name }
       }).save();
       return h.response(result);
     } catch (err) {
@@ -49,7 +52,7 @@ module.exports = {
       const result = await model.findOne({ _id: id });
       if (!result)
         return boom.notFound();
-      if (result.author != credentials.id)
+      if (result.author.id != credentials.id)
         return boom.unauthorized();
       result.update(payload);
       return h.response(result);
@@ -65,7 +68,7 @@ module.exports = {
       const result = await model.findOne({ _id: id });
       if (!result)
         return boom.notFound();
-      if (result.author != credentials.id)
+      if (result.author.id != credentials.id)
         return boom.unauthorized();
       result.destroy();
       return h.response(result);
@@ -110,9 +113,11 @@ module.exports = {
       const result = await model.findOne({ _id: id });
       if (!result)
         return boom.notFound();
+      const user = await userModel
+        .findById({ _id: credentials.id });
       result.answers.push({
         answer: payload.answer,
-        author: credentials.id,
+        author: { id: user.id, name: user.name }
       });
       result.save();
       return h.response(result);

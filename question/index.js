@@ -18,7 +18,7 @@ module.exports = {
       path: '/questions',
       handler: handler.create,
       options: {
-        auth: false,
+        auth: 'jwt',
         validate: {
           payload: {
             question: joi.string().required(),
